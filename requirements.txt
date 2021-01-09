@@ -1,0 +1,15 @@
+paddlepaddle==2.0.0rc1
+paddleocr
+opencc
+
+fastapi
+aiofiles
+python-multipart
+uvicorn
+
+kafka-python
+openpyxl
+regex
+
+# pip install -i https://mirror.baidu.com/pypi/simple -r requirements.txt
+

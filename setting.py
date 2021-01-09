@@ -1,0 +1,5 @@
+import os
+
+KAFKA_HOST = os.getenv('KAFKA_HOST', '')
+KAFKA_CONSUMER_TOPIC = os.getenv('KAFKA_CONSUMER_TOPIC', '')
+KAFKA_PRODUCER_TOPIC = os.getenv('KAFKA_PRODUCER_TOPIC', '')
