@@ -88,7 +88,11 @@ def make_photo_data(business_card_info):
 
 
 def fit_position(box):
-    return [box.top_left.x, box.top_left.y, box.bottom_right.x, box.bottom_right.y]
+    # return [box.top_left.x, box.top_left.y, box.bottom_right.x, box.bottom_right.y]
+    return [[box.top_left.x, box.top_left.y],
+            [box.top_right.x, box.top_right.y],
+            [box.bottom_left.x, box.bottom_left.y],
+            [box.bottom_right.x, box.bottom_right.y]]
 
 
 def make_name_data(business_card_info):
@@ -150,13 +154,18 @@ def ocr_task_result(task_id, code, message, ocr_result):
 
 class CBCRService:
     def __init__(self, hosts=setting.KAFKA_HOST):
-        self.kafka_consumer = kafka.KafkaConsumer('my_topic', bootstrap_servers=[hosts])
+        self.kafka_consumer = kafka.KafkaConsumer(setting.KAFKA_CONSUMER_TOPIC, bootstrap_servers=[hosts])
         self.kafka_producer = kafka.KafkaProducer(bootstrap_servers=[hosts])
 
     def run(self):
         logger.info('Chinese Business Card Recognition Service Listening...')
         for msg in self.kafka_consumer:
-            self.handle_msg(msg)
+            try:
+                self.handle_msg(msg)
+                continue
+            except Exception as e:
+                self.kafka_producer.send(setting.KAFKA_PRODUCER_TOPIC,
+                                         json.dumps({"code": "500", 'message': str(e)}).encode())
 
     def handle_msg(self, msg):
         task = CBCRTask(**json.loads(msg.value.decode()))
@@ -177,8 +186,7 @@ class CBCRService:
                                                              organization=make_organization_data(business_card_info),
                                                              ))
         data = task_result.json().encode()
-        print(data, flush=True)
-        # self.kafka_producer.send(data)
+        self.kafka_producer.send(setting.KAFKA_PRODUCER_TOPIC, data)
 
 
 if __name__ == '__main__':

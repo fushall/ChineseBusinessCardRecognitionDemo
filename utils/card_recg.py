@@ -48,7 +48,7 @@ class TitleExtractor(Extractor):
 class LocationExtractor(Extractor):
     def extract(self, text):
         if '地址' in text:
-            return text.replace('地址')
+            return text.replace('地址', '')
         for keyword in LOCATION_KEYWORDS:
             if keyword in text and len(text) > 9:
                 return text
@@ -65,7 +65,12 @@ class NameExtractor(Extractor):
         if 1 <= len(text) <= 3:
             match = re.search(NAME_PATTERN, text)
             if match:
-                return text
+                # 地点误识别为姓名，如台北市
+                for k in LOCATION_KEYWORDS:
+                    if text.endswith(k):
+                        return
+                else:
+                    return text
 
 
 class Name(BaseModel):
