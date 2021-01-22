@@ -41,8 +41,8 @@ class PhoneExtractor(Extractor):
 class TitleExtractor(Extractor):
     def extract(self, text):
         for title in TITLE_KEYWORDS:
-            if text.endswith(title):
-                return title
+            if text.endswith(title) and len(text) >= 2:
+                return text
 
 
 class LocationExtractor(Extractor):
@@ -69,8 +69,12 @@ class NameExtractor(Extractor):
                 for k in LOCATION_KEYWORDS:
                     if text.endswith(k):
                         return
-                else:
-                    return text
+                # 职位误识别为姓名，如董事长
+                if text in TITLE_KEYWORDS:
+                    return
+
+                # 返回姓名
+                return text
 
 
 class Name(BaseModel):
