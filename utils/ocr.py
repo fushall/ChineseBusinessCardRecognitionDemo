@@ -31,7 +31,7 @@ class OCRResult(BaseModel):
 
 
 def ocr(img):
-    result = pd_ocr.ocr(img, det=True, rec=True)
+    result = pd_ocr.ocr(img, det=True, rec=True, cls=True)
     if result is None:
         return
     texts = []

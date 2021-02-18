@@ -2,6 +2,7 @@ import abc
 from typing import List
 
 import regex as re
+from LAC import LAC
 from pydantic import Field, BaseModel
 
 from utils.family_name import full_family_names
@@ -77,6 +78,62 @@ class NameExtractor(Extractor):
                 return text
 
 
+lac = LAC(mode='lac')
+
+
+class NerExtractor(Extractor):
+    __instance = None
+    __model = None
+    __cache = {}
+    __cache_size = 15
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__instance is None:  # not thread safe
+            cls.__instance = super().__new__(cls, *args, **kwargs)
+            cls.__model = LAC(mode='lac')
+        return cls.__instance
+
+    def get_ner_result(self, text):
+        text_hash = hash(text)
+        if text_hash in self.__cache:
+            return self.__cache[text_hash]
+
+        if len(self.__cache) >= 15:
+            self.__cache.clear()
+
+        lac_result = lac.run(text)
+        result = []
+        for word, tag in zip(lac_result[0], lac_result[1]):
+            if tag in ('ORG', 'LOC', 'PER'):
+                result.append({'tag': tag, 'word': word})
+        self.__cache[text_hash] = result
+        return result
+
+
+class LocationNerExtractor(NerExtractor):
+    def extract(self, text):
+        result = self.get_ner_result(text)
+        for item in result:
+            if item['tag'] == 'LOC':
+                return item['word']
+
+
+class OrganizationNerExtractor(NerExtractor):
+    def extract(self, text):
+        result = self.get_ner_result(text)
+        for item in result:
+            if item['tag'] == 'ORG':
+                return item['word']
+
+
+class NameNerExtractor(NerExtractor):
+    def extract(self, text):
+        result = self.get_ner_result(text)
+        for item in result:
+            if item['tag'] == 'PER':
+                return item['word']
+
+
 class Name(BaseModel):
     value: str = Field(..., description='姓名')
     box: Box = Field(..., description='边框')
@@ -122,7 +179,8 @@ def extract_card_info_from_pd_ocr(pd_ocr_result: OCRResult):
         t = text.text
         t = t.replace(' ', '').strip()
 
-        name = NameExtractor().extract(t)
+        # name = NameExtractor().extract(t)
+        name = NameNerExtractor().extract(t)
         if name:
             card_info.name.append(Name(value=name, box=text.box))
         phone = PhoneExtractor().extract(t)
@@ -131,13 +189,15 @@ def extract_card_info_from_pd_ocr(pd_ocr_result: OCRResult):
         email = EmailExtractor().extract(t)
         if email:
             card_info.email.append(Email(value=email, box=text.box))
-        location = LocationExtractor().extract(t)
+        # location = LocationExtractor().extract(t)
+        location = LocationNerExtractor().extract(t)
         if location:
             card_info.location.append(Location(value=location, box=text.box))
         title = TitleExtractor().extract(t)
         if title:
             card_info.title.append(Title(value=title, box=text.box))
-        organization = OrganizationExtractor().extract(t)
+        # organization = OrganizationExtractor().extract(t)
+        organization = OrganizationNerExtractor().extract(t)
         if organization:
             card_info.organization.append(Organization(value=organization, box=text.box))
 

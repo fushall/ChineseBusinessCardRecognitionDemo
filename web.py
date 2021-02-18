@@ -4,15 +4,18 @@ import logging
 import fastapi
 import pydantic
 import uvicorn
+from fastapi.staticfiles import StaticFiles
 from kafka import KafkaProducer, KafkaConsumer
 
 import setting
 from cbcr import CBCRTask
 from utils.card_recg import extract_card_info_from_pd_ocr, CardInfo
-from utils.ocr import ocr_from_bytes, ocr_from_base64
+from utils.ocr import ocr_from_bytes, ocr_from_base64, OCRResult
 
 logger = logging.getLogger(__name__)
 app = fastapi.FastAPI()
+app.mount('/static', StaticFiles(directory='static'), name='静态文件')
+
 router = fastapi.APIRouter()
 debug_router = fastapi.APIRouter()
 
@@ -28,11 +31,23 @@ async def get_result_from_base64(image: CBCRImage):
     return business_card_info
 
 
+@router.post('/base64/raw', response_model=OCRResult)
+async def get_raw_from_base64(image: CBCRImage):
+    ocr_result = ocr_from_base64(image.base64_image)
+    return ocr_result
+
+
 @router.post('/image', response_model=CardInfo)
 async def get_result_from_image(image: fastapi.UploadFile = fastapi.File(..., description='business card image')):
     ocr_result = ocr_from_bytes(await image.read())
     business_card_info = extract_card_info_from_pd_ocr(ocr_result)
     return business_card_info
+
+
+@router.post('/image/raw', response_model=OCRResult)
+async def get_result_from_image(image: fastapi.UploadFile = fastapi.File(..., description='business card image')):
+    ocr_result = ocr_from_bytes(await image.read())
+    return ocr_result
 
 
 @debug_router.post('/send')

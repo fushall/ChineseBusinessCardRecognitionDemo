@@ -11,5 +11,6 @@ kafka-python
 openpyxl
 regex
 
+lac
 # pip install -i https://mirror.baidu.com/pypi/simple -r requirements.txt
 

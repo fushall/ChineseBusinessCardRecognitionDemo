@@ -2,3 +2,6 @@
 venv/
 __pycache__/
 .idea/
+ppocr/
+imgsa/
+inference_results/
