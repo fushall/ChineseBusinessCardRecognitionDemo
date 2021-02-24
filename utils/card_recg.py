@@ -9,7 +9,7 @@ from utils.family_name import full_family_names
 from utils.ocr import OCRResult, Box
 
 EMAIL_PATTERN = r'[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}'
-PHONE_PATTERN = r'\+?\(?\d+[)-]?\d+'
+PHONE_PATTERN = r'[+]+([-()]*\d+)+'
 TITLE_KEYWORDS = ['委员', '主席', '首席', '合伙人', '顾问', '负责人', '行长', '厂长', '合伙人', '经纪人', '中介',
                   '董事长', '总监', '总裁', '专员', '助理', '主管', '工程师', '经理', '督导', '代表', '指导', '员']
 LOCATION_KEYWORDS = ['省', '自治区', '市', '路', '号', '单元', '楼']
